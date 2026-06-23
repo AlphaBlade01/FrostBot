@@ -39,20 +39,14 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
     private async Task LogError(Exception ex, string action)
     {
         EmbedProperties embed = DiscordInteractions.CreateFailEmbed($"Error occured while {action}");
-        await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties
-        {
-            Embeds = [embed]
-        }));
+        await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
         await _logService.SendLogErrorEmbed(Context.Guild.Id, ex.Message, "Error occured while " + action);
     }
 
     private async Task RespondToModeration(string status)
     {
         EmbedProperties embed = DiscordInteractions.CreateSuccessEmbed(status);
-        await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties
-        {
-            Embeds = [embed]
-        }));
+        await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
     }
 
     private int Parse(string input, string unit)
@@ -101,6 +95,7 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
 
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             string status = await _modService.WarnAsync(user, Context.User.Id, reason);
             await RespondToModeration(status);
         }
@@ -122,6 +117,7 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
 
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             string status = await _modService.KickAsync(user.GuildId, user, Context.User.Id, reason);
             await user.KickAsync();
             await RespondToModeration(status);
@@ -145,6 +141,7 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
 
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             DateTimeOffset until = await ParseTime(duration);
             DateTimeOffset maximumUntil = DateTimeOffset.UtcNow.AddSeconds(2_419_190);
             until = maximumUntil < until ? maximumUntil : until;
@@ -171,6 +168,7 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
 
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             DateTimeOffset? until = duration != null ? await ParseTime(duration) : null;
             string status = await _modService.BanAsync(user, Context.User.Id, reason, until);
             await user.BanAsync(deleteMessages ? 86400 : 0, new() { AuditLogReason = reason });
@@ -189,9 +187,10 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
     {
         try
         {
-            string status = await _modService.UnmuteAsync(user, Context.User.Id);
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+            bool success = await _modService.UnmuteAsync(user, Context.User.Id);
             await user.ModifyAsync(u => u.TimeOutUntil = default(DateTimeOffset));
-            await RespondToModeration(status);
+            await RespondToModeration(success ? $"User {user} unmuted." : "User is not muted.");
         } catch (Exception ex)
         {
             await LogError(ex, "unmuting");
@@ -209,9 +208,10 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
 
         try
         {
-            string status = await _modService.UnbanAsync(Context.Guild.Id, user, Context.User.Id, reason);
-            await Context.Client.Rest.UnbanGuildUserAsync(Context.Guild.Id, user.Id);
-            await RespondToModeration(status);
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+            bool success = await _modService.UnbanAsync(Context.Guild.Id, user, Context.User.Id, reason);      
+            if (success) await Context.Client.Rest.UnbanGuildUserAsync(Context.Guild.Id, user.Id);
+            await RespondToModeration(success ? $"User {user} unbanned" : "User is not banned.");
         }
         catch (Exception ex)
         {
@@ -220,35 +220,39 @@ public class ModerationModule : ApplicationCommandModule<ApplicationCommandConte
     }
 
     [SlashCommand("warnings", "View warnings of a user", DefaultGuildPermissions = Permissions.ModerateUsers)]
-    public async Task<InteractionMessageProperties> Warnings(User? user = null)
+    public async Task Warnings(User? user = null)
     {
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
         User target = user ?? Context.User;
         InteractionMessageProperties message = await _modViewEngine.CreateModLogEmbed<Warning>(target, 1);
-        return message;
+        await DiscordInteractions.SendDeferredResponse(Context, message);
     }
 
     [SlashCommand("kicks", "View kicks of a user", DefaultGuildPermissions = Permissions.ModerateUsers)]
-    public async Task<InteractionMessageProperties> Kicks(User? user = null)
+    public async Task Kicks(User? user = null)
     {
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
         User target = user ?? Context.User;
         InteractionMessageProperties message = await _modViewEngine.CreateModLogEmbed<Kick>(target, 1);
-        return message;
+        await DiscordInteractions.SendDeferredResponse(Context, message);
     }
 
     [SlashCommand("bans", "View bans of a user", DefaultGuildPermissions = Permissions.ModerateUsers)]
-    public async Task<InteractionMessageProperties> Bans(User? user = null)
+    public async Task Bans(User? user = null)
     {
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
         User target = user ?? Context.User;
         InteractionMessageProperties message = await _modViewEngine.CreateModLogEmbed<Ban>(target, 1);
-        return message;
+        await DiscordInteractions.SendDeferredResponse(Context, message);
     }
 
     [SlashCommand("mutes", "View mutes of a user", DefaultGuildPermissions = Permissions.ModerateUsers)]
-    public async Task<InteractionMessageProperties> Mutes(User? user = null)
+    public async Task Mutes(User? user = null)
     {
+        await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
         User target = user ?? Context.User;
         InteractionMessageProperties message = await _modViewEngine.CreateModLogEmbed<Mute>(target, 1);
-        return message;
+        await DiscordInteractions.SendDeferredResponse(Context, message);
     }
 }
 

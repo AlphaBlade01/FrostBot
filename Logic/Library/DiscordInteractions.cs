@@ -15,12 +15,16 @@ public static class DiscordInteractions
         }));
     }
 
-    public static async Task RespondWithMessage(ApplicationCommandContext context, string content)
+    public static async Task SendDeferredResponse(ApplicationCommandContext context, InteractionMessageProperties message)
     {
-        await context.Interaction.SendResponseAsync(InteractionCallback.Message(new InteractionMessageProperties()
+        await context.Interaction.ModifyResponseAsync(x =>
         {
-            Content = content
-        }));
+            x.Content = message.Content;
+            x.Embeds = message.Embeds;
+            x.Components = message.Components;
+            x.AllowedMentions = message.AllowedMentions;
+            x.Flags = message.Flags;
+        });
     }
 
     public static EmbedProperties CreateLogEmbed(string title, string? content = null, string? authorName = null,

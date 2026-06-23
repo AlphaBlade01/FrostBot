@@ -28,43 +28,55 @@ public class LevelModule : ApplicationCommandModule<ApplicationCommandContext>
     [SlashCommand("level", "See level of specified user (defaults to self)")]
     public async Task Level(GuildUser? user = null)
     {
-        const char filledChar = '▰';
-        const char emptyChar = '▱';
-        user = user ?? (GuildUser)Context.User;
-
-        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        UserInfo? info = await dbContext.UserInfo.FirstOrDefaultAsync(u => u.UserId == user.Id);
-
-        double xp = info?.TotalXp ?? 0;
-        int level = info?.Level ?? 0;
-        int baseXp = _levelService.CalculateXp(level);
-        int maxXp = _levelService.CalculateXp(level + 1);
-        int progress = (int) ((xp - baseXp) / (maxXp - baseXp) * 20);
-        string progressBar = $"[ {new string(filledChar, progress) + new string(emptyChar, 20 - progress)} ]";
-
-        await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new()
+        try
         {
-            Content = $"{user} is level **{level}** with total XP **{xp}**\n{progressBar}\n{xp - baseXp} / {maxXp - baseXp} XP",
-            AllowedMentions = AllowedMentionsProperties.None
-        }));
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+            const char filledChar = '▰';
+            const char emptyChar = '▱';
+            user = user ?? (GuildUser)Context.User;
+
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+            UserInfo? info = await dbContext.UserInfo.FirstOrDefaultAsync(u => u.UserId == user.Id);
+
+            double xp = info?.TotalXp ?? 0;
+            int level = info?.Level ?? 0;
+            int baseXp = _levelService.CalculateXp(level);
+            int maxXp = _levelService.CalculateXp(level + 1);
+            int progress = (int)((xp - baseXp) / (maxXp - baseXp) * 20);
+            string progressBar = $"[ {new string(filledChar, progress) + new string(emptyChar, 20 - progress)} ]";
+
+            await Context.Interaction.ModifyResponseAsync(x =>
+            {
+                x.Content = $"{user} is level **{level}** with total XP **{xp}**\n{progressBar}\n{xp - baseXp} / {maxXp - baseXp} XP";
+                x.AllowedMentions = AllowedMentionsProperties.None;
+            });
+        }
+        catch (Exception ex)
+        {
+            await _logService.SendLogErrorEmbed(Context.Guild.Id, ex.Message, "Error while executing level command");
+            var embed = DiscordInteractions.CreateFailEmbed("Error while executing level command.");
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
+        }
     }
 
     [SlashCommand("leaderboard", "View the level leaderboard")]
-    public async Task<InteractionMessageProperties> Leaderboard()
+    public async Task Leaderboard()
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             string levelList = await _levelService.GetLeaderboardPage(1);
             bool hasNextPage = _levelService.hasNextPage(1);
+            
             InteractionMessageProperties message = DiscordInteractions.CreatePagedEmbed("Level Leaderboard", levelList, 1, "level", hasNextPage);
             message.Embeds?.First().WithColor(new Color(61, 119, 206));
-            return message;
+            await DiscordInteractions.SendDeferredResponse(Context, message);
         }
         catch (Exception ex)
         {
             await _logService.SendLogErrorEmbed(Context.Guild.Id, ex.Message, "Error while fetching leaderboard.");
             var embed = DiscordInteractions.CreateFailEmbed("Error while fetching leaderboard.");
-            return new InteractionMessageProperties().WithEmbeds([embed]);
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
         }
     }
 }

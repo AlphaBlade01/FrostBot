@@ -20,9 +20,10 @@ public class UserLeaveHandler : IGuildUserRemoveGatewayHandler
         var logEmbed = new EmbedProperties()
             .WithTitle("User left")
             .WithDescription(arg.User.ToString())
-            .WithFooter(new() { Text = arg.User.ToString() })
+            .WithFooter(new() { Text = $"Id: {arg.User.Id}" })
             .WithTimestamp(DateTimeOffset.UtcNow)
             .WithColor(BotColours.User);
+        DiscordInteractions.ApplyAuthor(logEmbed, arg.User);
         await _logService.SendLogEmbed(arg.GuildId, logEmbed);
     }
 }

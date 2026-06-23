@@ -83,12 +83,12 @@ public class ModerationService
         return $"Banned user {user}.";
     }
 
-    public async Task<string> UnbanAsync(ulong guildId, User user, ulong? moderatorId = null, string? reason = null)
+    public async Task<bool> UnbanAsync(ulong guildId, User user, ulong? moderatorId = null, string? reason = null)
     {
         // Update database
         await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
         Ban? ban = await dbContext.Bans.FirstOrDefaultAsync(b => b.UserId == user.Id && b.IsActive == true);
-        if (ban == null) return "User is not banned.";
+        if (ban == null) return false;
 
         ban.UnbannedAt = DateTimeOffset.UtcNow;
         ban.IsActive = false;
@@ -105,7 +105,7 @@ public class ModerationService
             .AddFields([new() { Name = "User", Value = user.ToString(), Inline = true }]);
         if (moderatorId != null) embed.AddFields([new() { Name = "Moderator", Value = $"<@{moderatorId}>", Inline = true }]);
         await _logService.SendLogEmbed(guildId, embed);
-        return $"Unbanned user {user}.";
+        return true;
     }
 
     public async Task<string> MuteAsync(GuildUser user, ulong moderatorId, string reason, DateTimeOffset until)
@@ -137,12 +137,12 @@ public class ModerationService
         return $"Muted user {user}.";
     }
 
-    public async Task<string> UnmuteAsync(GuildUser user, ulong? moderatorId = null)
+    public async Task<bool> UnmuteAsync(GuildUser user, ulong? moderatorId = null)
     {
         // Update database
         await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
         Mute? mute = await dbContext.Mutes.FirstOrDefaultAsync(m => m.UserId == user.Id && m.IsActive);
-        if (mute == null) return "User is not muted.";
+        if (mute == null) return false;
 
         mute.UnmutedAt = DateTimeOffset.UtcNow;
         mute.IsActive = false;
@@ -159,7 +159,7 @@ public class ModerationService
             .AddFields([ new() { Name = "User", Value = user.ToString(), Inline = true } ]);
         if (moderatorId != null) embed.AddFields([new() { Name = "Moderator", Value = $"<@{moderatorId}>", Inline = true }]);
         await _logService.SendLogEmbed(user.GuildId, embed);
-        return $"Unmuted user {user}.";
+        return true;
     }
 
     public async Task<string> KickAsync(ulong guildId, User user, ulong moderatorId, string reason)

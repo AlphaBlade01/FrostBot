@@ -28,7 +28,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         await _logService.SendLogErrorEmbed(Context.Guild.Id, exMessage, title);
         var embed = DiscordInteractions.CreateFailEmbed("Error occured.");
-        await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+        await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
     }
 
     private async Task LogAction(string description, string? footer = null)
@@ -46,6 +46,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext db = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await db.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
 
@@ -66,7 +67,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await db.SaveChangesAsync();
             EmbedProperties embed = DiscordInteractions.CreateSuccessEmbed($"Log channel set to {channel}");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Log channel set to {channel}", $"Id: {channel.Id.ToString()}");
         }
         catch (Exception ex)
@@ -80,6 +81,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
 
@@ -99,7 +101,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await dbContext.SaveChangesAsync();
             EmbedProperties embed = DiscordInteractions.CreateSuccessEmbed($"Auto role set to {role}");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Auto role set to {role}", role != null ? $"Id: {role.Id}" : null);
 
         } catch (Exception ex)
@@ -113,6 +115,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
 
@@ -132,7 +135,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await dbContext.SaveChangesAsync();
             EmbedProperties embed = DiscordInteractions.CreateSuccessEmbed($"Welcome channel set to {channel}");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Welcome channel set to {channel}", channel != null ? $"Id: {channel.Id}" : null);
         }
         catch (Exception ex)
@@ -146,6 +149,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
 
@@ -166,7 +170,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await dbContext.SaveChangesAsync();
             EmbedProperties embed = DiscordInteractions.CreateSuccessEmbed($"Welcome message set to `{message ?? "default"}`");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Welcome message set to `{message ?? "default"}`");
         }
         catch (Exception ex)
@@ -180,6 +184,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
             if (config == null)
@@ -198,7 +203,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await dbContext.SaveChangesAsync();
             var embed = DiscordInteractions.CreateSuccessEmbed("Level up message set to: " + message ?? "default");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Set level up message: {message ?? "default"}");
         } catch (Exception ex)
         {
@@ -212,6 +217,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
             GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
 
@@ -232,7 +238,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
             await dbContext.SaveChangesAsync();
             var embed = DiscordInteractions.CreateSuccessEmbed($"Level channel set to {channel}");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Set level channel to {channel}", channel != null ? $"Id: {channel.Id}" : null);
         } catch (Exception ex)
         {
@@ -246,6 +252,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
             ChannelConfig? retrievedConfig = await dbContext.ChannelConfigs.FirstOrDefaultAsync(c => c.ChannelId == channel.Id);
             bool exists = retrievedConfig != null;
@@ -257,7 +264,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
             await dbContext.SaveChangesAsync();
 
             var embed = DiscordInteractions.CreateSuccessEmbed($"Successfully updated channel configurations for {channel}.");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Successfully updated channel configurations for {channel}", $"Id: {channel.Id}");
         } catch (Exception ex)
         {
@@ -270,6 +277,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
             ChannelConfig? retrievedConfig = await dbContext.ChannelConfigs.FirstOrDefaultAsync(c => c.ChannelId == channel.Id);
             string body = "";
@@ -294,7 +302,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
                 .WithTitle($"Channel config for {channel}")
                 .WithDescription(body)
                 .WithFooter(new() { Text = $"Channel Id: {channel.Id}" });
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
 
         } catch (Exception ex)
         {
@@ -307,6 +315,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
     {
         try
         {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
             await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
             EmbedProperties embed;
 
@@ -315,7 +324,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
             {
                 await dbContext.RoleRewards.Where(r => r.LevelRequired == level).ExecuteDeleteAsync();
                 embed = DiscordInteractions.CreateSuccessEmbed($"Removed role reward for level **{level}**");
-                await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+                await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
                 return;
             }
 
@@ -333,7 +342,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
             await dbContext.SaveChangesAsync();
 
             embed = DiscordInteractions.CreateSuccessEmbed($"Role {role} set to be rewarded at level **{level}**.");
-            await Context.Interaction.SendResponseAsync(InteractionCallback.Message(new() { Embeds = [embed] }));
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
             await LogAction($"Set role {role} to be rewarded at level {level}", $"Id: {role.Id}");
         } catch (Exception ex)
         {
