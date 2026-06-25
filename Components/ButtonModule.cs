@@ -44,11 +44,11 @@ public class ButtonModule : ComponentInteractionModule<ButtonInteractionContext>
 
 
     [ComponentInteraction("paged_embed")]
-    public async Task HandlePagedEmbed(string embedType, int targetPage, ulong? targetUserId = null)
+    public async Task HandlePagedEmbed(string embedType, int targetPage, ulong targetUserId)
     {
         try
         {
-            User? user = targetUserId != null ? await Context.Client.Rest.GetUserAsync((ulong)targetUserId) : null;
+            User? user = targetUserId != 0 ? await Context.Client.Rest.GetUserAsync(targetUserId) : null;
             InteractionMessageProperties response = embedType switch
             {
                 "level" => await HandleLeaderboardAsync(targetPage),

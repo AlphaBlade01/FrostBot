@@ -64,13 +64,13 @@ public static class DiscordInteractions
 
     public static InteractionMessageProperties CreatePagedEmbed(string title, string description, int page, string id, bool hasNextPage = true, string[]? argsList = null)
     {
-        string? args = argsList != null ? $":{string.Join(':', argsList)}" : string.Empty;
+        string? args = argsList != null ? string.Join(':', argsList) : "0";
         var embed = new EmbedProperties().WithTitle(title).WithDescription(description);
         var messageProperties = new InteractionMessageProperties().WithEmbeds([embed]);
         var actionRow = new ActionRowProperties();
 
-        if (page > 1) actionRow.AddComponents([new ButtonProperties($"paged_embed:{id}:{page - 1}{args}", EmojiProperties.Standard("⬅️"), ButtonStyle.Primary)]);
-        if (hasNextPage) actionRow.AddComponents([new ButtonProperties($"paged_embed:{id}:{page + 1}{args}", EmojiProperties.Standard("➡️"), ButtonStyle.Primary)]);
+        if (page > 1) actionRow.AddComponents([new ButtonProperties($"paged_embed:{id}:{page - 1}:{args}", EmojiProperties.Standard("⬅️"), ButtonStyle.Primary)]);
+        if (hasNextPage) actionRow.AddComponents([new ButtonProperties($"paged_embed:{id}:{page + 1}:{args}", EmojiProperties.Standard("➡️"), ButtonStyle.Primary)]);
 
         return messageProperties.WithComponents(actionRow.Any() ? [actionRow] : null);
     }
