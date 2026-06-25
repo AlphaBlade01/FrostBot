@@ -69,7 +69,7 @@ public class LevelModule : ApplicationCommandModule<ApplicationCommandContext>
             bool hasNextPage = _levelService.hasNextPage(1);
             
             InteractionMessageProperties message = DiscordInteractions.CreatePagedEmbed("Level Leaderboard", levelList, 1, "level", hasNextPage);
-            message.Embeds?.First().WithColor(new Color(61, 119, 206));
+            message.Embeds?.First().WithColor(BotColours.User);
             await DiscordInteractions.SendDeferredResponse(Context, message);
         }
         catch (Exception ex)

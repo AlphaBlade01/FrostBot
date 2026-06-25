@@ -32,6 +32,7 @@ public class ButtonModule : ComponentInteractionModule<ButtonInteractionContext>
             string body = await _levelService.GetLeaderboardPage(targetPage);
             bool hasNextPage = _levelService.hasNextPage(targetPage);
             var message = DiscordInteractions.CreatePagedEmbed("Level Leaderboard", body, targetPage, $"level", hasNextPage);
+            message.Embeds?.First().WithColor(BotColours.User);
             return message;
         }
         catch (Exception ex)
