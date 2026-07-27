@@ -310,7 +310,7 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
         }
     }
 
-    [SlashCommand("setlevelreward", "Set the role rewarded upon reaching a certain level (no role = remove role reward)")]
+    [SlashCommand("setlevelreward", "Set the role rewarded upon reaching a certain level (no role = remove role reward)", DefaultGuildPermissions = Permissions.Administrator)]
     public async Task SetLevelReward(int level, Role? role = null)
     {
         try
