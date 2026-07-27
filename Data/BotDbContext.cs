@@ -19,6 +19,7 @@ public class BotDbContext : DbContext
     public DbSet<ChannelConfig> ChannelConfigs { get; set; }
     public DbSet<UserInfo> UserInfo { get; set; }
     public DbSet<RoleReward> RoleRewards { get; set; }
+    public DbSet<LogMessage> Messages { get; set; }
 
     public BotDbContext(IConfiguration configuration)
     {

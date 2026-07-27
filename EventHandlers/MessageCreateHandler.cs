@@ -58,7 +58,7 @@ public class MessageCreateHandler : IMessageCreateGatewayHandler
         }
     }
 
-    public async ValueTask HandleAsync(Message arg)
+    private async Task HandleLevelLogic(Message arg)
     {
         var userId = arg.Author.Id;
 
@@ -83,6 +83,31 @@ public class MessageCreateHandler : IMessageCreateGatewayHandler
         await Task.WhenAll(
             HandleRoleReward(user.Level, levelIncrease, arg.Author as GuildUser),
             SendLevelUpNotification(arg, user)
-        );        
+        );
+    }
+
+    private async Task HandleMessageLogging(Message arg)
+    {
+        if (arg.Author.IsBot || arg.GuildId is null) return; // Only log messages from users in guilds
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        LogMessage newLog = new()
+        {
+            MessageId = arg.Id,
+            AuthorId = arg.Author.Id,
+            ChannelId = arg.ChannelId,
+            Content = arg.Content,
+            CreatedAt = arg.CreatedAt
+        };
+        await dbContext.Messages.AddAsync(newLog);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async ValueTask HandleAsync(Message arg)
+    {
+        await Task.WhenAll(
+            HandleLevelLogic(arg),
+            HandleMessageLogging(arg)
+        );
     }
 }

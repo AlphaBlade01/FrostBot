@@ -577,6 +577,32 @@ namespace FrostBot.Data.Migrations
                     b.ToTable("Kicks");
                 });
 
+            modelBuilder.Entity("FrostBot.Data.Models.LogMessage", b =>
+                {
+                    b.Property<ulong>("MessageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("AuthorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong>("ChannelId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("MessageId");
+
+                    b.ToTable("Messages");
+                });
+
             modelBuilder.Entity("FrostBot.Data.Models.Mute", b =>
                 {
                     b.Property<int>("Id")
