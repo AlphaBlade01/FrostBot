@@ -34,7 +34,7 @@ namespace FrostBot.Data.Migrations
                     WHERE MessageId IN (
                         SELECT MessageId FROM Messages
                         ORDER BY CreatedAt ASC
-                        LIMIT MAX(0, (SELECT COUNT(*) FROM Messages) - 5)
+                        LIMIT MAX(0, (SELECT COUNT(*) FROM Messages) - 20000)
                     );
                 END;
             ");
