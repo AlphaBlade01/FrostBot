@@ -23,8 +23,8 @@ public class MessageUpdateHandler : IMessageUpdateGatewayHandler
 
     public async ValueTask HandleAsync(Message arg)
     {
-        if (arg.Author.IsBot) return; // Ensure no bot messages are logged
-        if (arg.Guild is null) return; // Ensure the message is in a guild
+        // Ignore bot messages, messages outside of guilds, and messages that have not been edited
+        if (arg.Author.IsBot || arg.Guild is null || arg.EditedAt is null) return;
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         LogMessage? log = await dbContext.Messages.FirstOrDefaultAsync(m => m.MessageId == arg.Id);
