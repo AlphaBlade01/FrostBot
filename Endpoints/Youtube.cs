@@ -1,8 +1,4 @@
 ﻿using FrostBot.Logic.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Logging;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -35,10 +31,20 @@ public class Youtube : IEndpoint
         string? hubTopic = request.Query["hub.topic"];
         string? hubChallenge = request.Query["hub.challenge"];
 
+        _logger.LogInformation("Received hub verification request: mode={Mode}, topic={Topic}, challenge={Challenge}",
+            hubMode ?? "null", hubTopic ?? "null", hubChallenge ?? "null");
+
+        // callback is reachable and echoes correctly. Google always sends all three params.
+        if (hubChallenge != null && (hubMode == null || hubTopic == null))
+        {
+            _logger.LogInformation("Returning challenge for manual verification test.");
+            return Results.Text(hubChallenge);
+        }
+
         if (hubMode is not ("subscribe" or "unsubscribe") || hubTopic != NotificationService.TOPIC_URL)
         {
-            _logger.LogWarning("Ignoring hub verification request (mode: {Mode}, topic: {Topic})", hubMode ?? "null", hubTopic ?? "null");
-            return Results.NotFound();
+            _logger.LogWarning("Rejecting hub verification request (mode: {Mode}, topic: {Topic})", hubMode ?? "null", hubTopic ?? "null");
+            return Results.BadRequest("Invalid mode or topic");
         }
 
         _logger.LogInformation("Acknowledged hub {Mode} verification for YouTube channel.", hubMode);

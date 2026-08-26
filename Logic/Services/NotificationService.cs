@@ -1,8 +1,6 @@
 ﻿using FrostBot.Data;
 using FrostBot.Data.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using NetCord;
 using NetCord.Gateway;
 using NetCord.Rest;
 using System.Collections.Concurrent;
@@ -17,7 +15,9 @@ public class NotificationService
     public const string HUB_SUBSCRIBE_URL = "https://pubsubhubbub.appspot.com/subscribe";
     public const string TOPIC_URL = "https://www.youtube.com/xml/feeds/videos.xml?channel_id=" + CHANNEL_ID;
     public const string CALLBACK_PATH = "/webhook/youtube";
-    public const string CALLBACK_URL = "http://frostbotyt.duckdns.org" + CALLBACK_PATH; // HACK: ngrok URL for testing, replace with your public URL in production
+    // The hub requires the callback to be publicly reachable over HTTPS.
+    // Override via the "Youtube:CallbackUrl" config value (e.g. an ngrok URL for local testing).
+    public const string CALLBACK_URL = "https://frostbotyt.duckdns.org" + CALLBACK_PATH;
 
     private const int DEDUPE_WINDOW_HOURS = 24;
     private const int MAX_CACHE_ENTRIES = 1000;
@@ -26,16 +26,21 @@ public class NotificationService
     private readonly GatewayClient _client;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<NotificationService> _logger;
+    private readonly string _callbackUrl;
 
     // Video IDs of recently sent notifications, used to ignore duplicate hub deliveries
     private readonly ConcurrentDictionary<string, DateTimeOffset> _recentVideos = new();
 
-    public NotificationService(IDbContextFactory<BotDbContext> dbContextFactory, GatewayClient client, IHttpClientFactory httpClientFactory, ILogger<NotificationService> logger)
+    public NotificationService(IDbContextFactory<BotDbContext> dbContextFactory, GatewayClient client, IHttpClientFactory httpClientFactory, IConfiguration configuration, ILogger<NotificationService> logger)
     {
         _dbContextFactory = dbContextFactory;
         _client = client;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
+
+        _callbackUrl = configuration["Youtube:CallbackUrl"] ?? CALLBACK_URL;
+        if (!_callbackUrl.EndsWith(CALLBACK_PATH, StringComparison.Ordinal))
+            _logger.LogWarning("Configured Youtube:CallbackUrl ({CallbackUrl}) does not end with the callback path {CallbackPath}.", _callbackUrl, CALLBACK_PATH);
     }
 
     public async Task SubscribeToYoutubeAsync()
@@ -48,13 +53,13 @@ public class NotificationService
         {
             ["hub.mode"] = "subscribe",
             ["hub.topic"] = TOPIC_URL,
-            ["hub.callback"] = CALLBACK_URL,
+            ["hub.callback"] = _callbackUrl,
             ["hub.verify"] = "sync",
             // Ask for the maximum lease; the hub may grant less (e.g. 5 days), so we renew daily regardless
             ["hub.lease_seconds"] = "604800"
         });
 
-        _logger.LogInformation("Subscribing to YouTube channel {ChannelId} (callback: {CallbackUrl})", CHANNEL_ID, CALLBACK_URL);
+        _logger.LogInformation("Subscribing to YouTube channel {ChannelId} (callback: {CallbackUrl})", CHANNEL_ID, _callbackUrl);
         HttpResponseMessage response = await httpClient.PostAsync(HUB_SUBSCRIBE_URL, form);
         response.EnsureSuccessStatusCode();
         _logger.LogInformation("YouTube subscription verified by hub (HTTP {(int)response.StatusCode}).");
