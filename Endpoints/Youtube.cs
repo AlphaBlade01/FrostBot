@@ -64,10 +64,21 @@ public class Youtube : IEndpoint
             {
                 string? videoId = (string?)entry.Element(YT_NS + "videoId");
                 string? channelId = (string?)entry.Element(YT_NS + "channelId");
-                if (videoId == null) continue;
-                if (channelId != null && channelId != NotificationService.CHANNEL_ID) continue;
+                string? title = (string?)entry.Element(ATOM_NS + "title");
 
-                await notificationService.SendYoutubeNotificationAsync($"https://www.youtube.com/watch?v={videoId}");
+                if (videoId == null)
+                {
+                    _logger.LogWarning("Skipping YouTube feed entry: missing videoId (title: {Title}).", title);
+                    continue;
+                }
+                if (channelId != null && channelId != NotificationService.CHANNEL_ID)
+                {
+                    _logger.LogWarning("Skipping YouTube video {VideoId}: feed channelId {EntryChannelId} does not match configured channel {ConfiguredChannelId}.",
+                        videoId, channelId, NotificationService.CHANNEL_ID);
+                    continue;
+                }
+
+                await notificationService.SendYoutubeNotificationAsync($"https://www.youtube.com/watch?v={videoId}", title);
                 forwarded++;
             }
 

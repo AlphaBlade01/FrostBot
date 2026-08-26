@@ -55,6 +55,16 @@ builder.Services.AddDiscordGateway(options =>
 // Pooled HTTP client (used by NotificationService) so repeated subscribe attempts don't leak sockets
 builder.Services.AddHttpClient("youtube-hub", client => client.DefaultRequestHeaders.UserAgent.ParseAdd("FrostBot"));
 
+// Pooled client for YouTube page/API checks: never follow redirects (the /shorts/ check relies on a
+// 3xx meaning "not a Short") and send the consent-bypass cookie to avoid Google's EU consent redirect.
+builder.Services.AddHttpClient("youtube-scrape", client =>
+    {
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+        client.DefaultRequestHeaders.Add("Cookie", "SOCS=CAI; CONSENT=YES+1");
+        client.Timeout = TimeSpan.FromSeconds(15);
+    })
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+
 // Discover all endpoint types so new endpoints are registered automatically
 var endpointTypes = typeof(Program).Assembly.GetTypes()
     .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IEndpoint).IsAssignableFrom(t))
