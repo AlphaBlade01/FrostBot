@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <UserSecretsId>3109f7b2-7450-4a39-85e7-76f897b82081</UserSecretsId>
+    <!-- Workstation GC keeps the memory footprint low on the 1 GB OCI micro instance -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
   </PropertyGroup>
 
   <ItemGroup>

@@ -11,7 +11,9 @@ public class GuildConfig
     public ulong? LogChannelId { get; set; }
     public ulong? WelcomeChannelId { get; set; }
     public ulong? LevelUpChannelId { get; set; }
+    public ulong? VideoNotificationChannelId { get; set; }
     public ulong? AutoRoleId { get; set; }
+    public ulong? VideoNotificationRoleId { get; set; }
     public string? WelcomeMessage { get; set; }
     public string? LevelUpMessage { get; set; }
 

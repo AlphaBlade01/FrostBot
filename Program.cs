@@ -1,4 +1,6 @@
 ﻿using FrostBot.Data;
+using FrostBot.Endpoints;
+using FrostBot.Logic.Jobs.Registrations;
 using FrostBot.Logic.Services;
 using FrostBot.Logic.Views;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +16,7 @@ using NetCord.Hosting.Services.ComponentInteractions;
 using NetCord.Services.ComponentInteractions;
 using Quartz;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 var token = builder.Configuration["Discord:BotToken"] ?? throw new InvalidOperationException("Discord:BotToken configuration value is not set.");
 
 builder.Services.AddDiscordGateway(options =>
@@ -46,15 +48,43 @@ builder.Services.AddDiscordGateway(options =>
     .AddSingleton<LogService>()
     .AddSingleton<ModerationService>()
     .AddSingleton<LevelService>()
+    .AddSingleton<NotificationService>()
     // Views
     .AddSingleton<ModerationViewEngine>();
 
-var host = builder.Build();
+// Pooled HTTP client (used by NotificationService) so repeated subscribe attempts don't leak sockets
+builder.Services.AddHttpClient("youtube-hub", client => client.DefaultRequestHeaders.UserAgent.ParseAdd("FrostBot"));
 
-using var db = host.Services
+// Discover all endpoint types so new endpoints are registered automatically
+var endpointTypes = typeof(Program).Assembly.GetTypes()
+    .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IEndpoint).IsAssignableFrom(t))
+    .ToArray();
+foreach (var type in endpointTypes)
+    builder.Services.AddSingleton(type);
+
+// Discover all job registrations so new scheduled jobs are registered automatically
+var jobRegistrationTypes = typeof(Program).Assembly.GetTypes()
+    .Where(t => !t.IsAbstract && !t.IsInterface && typeof(IJobRegistration).IsAssignableFrom(t))
+    .ToArray();
+foreach (var type in jobRegistrationTypes)
+    builder.Services.AddSingleton(type);
+
+var app = builder.Build();
+
+using var db = app.Services
     .GetRequiredService<IDbContextFactory<BotDbContext>>()
     .CreateDbContext();
 await db.Database.MigrateAsync();
 
-host.AddModules(typeof(Program).Assembly);
-await host.RunAsync();
+app.AddModules(typeof(Program).Assembly);
+
+// Map all discovered endpoints
+foreach (var type in endpointTypes)
+    ((IEndpoint)app.Services.GetRequiredService(type)).Map(app);
+
+// Register all scheduled jobs — each IJobRegistration describes its own job and triggers
+var scheduler = app.Services.GetRequiredService<IScheduler>();
+foreach (var type in jobRegistrationTypes)
+    await ((IJobRegistration)app.Services.GetRequiredService(type)).RegisterAsync(scheduler);
+
+await app.RunAsync();

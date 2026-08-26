@@ -246,6 +246,74 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
         }
     }
 
+    [SlashCommand("setvideochannel", "Set the channel to which YouTube upload notifications are sent.", DefaultGuildPermissions = Permissions.Administrator)]
+    public async Task SetVideoChannel(Channel? channel = null)
+    {
+        try
+        {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+            await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+            GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (config == null)
+            {
+                config = new()
+                {
+                    GuildId = Context.Guild.Id,
+                    VideoNotificationChannelId = channel?.Id
+                };
+                await dbContext.GuildConfigs.AddAsync(config);
+            }
+            else
+            {
+                config.VideoNotificationChannelId = channel?.Id;
+                dbContext.GuildConfigs.Update(config);
+            }
+
+            await dbContext.SaveChangesAsync();
+            var embed = DiscordInteractions.CreateSuccessEmbed($"Video notification channel set to {channel}");
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
+            await LogAction($"Set video notification channel to {channel}", channel != null ? $"Id: {channel.Id}" : null);
+        } catch (Exception ex)
+        {
+            await LogError("Error while setting video notification channel", ex.Message);
+        }
+    }
+
+    [SlashCommand("setvideorole", "Set the role pinged in YouTube upload notifications.", DefaultGuildPermissions = Permissions.Administrator)]
+    public async Task SetVideoRole(Role? role = null)
+    {
+        try
+        {
+            await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
+            await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+            GuildConfig? config = await dbContext.GuildConfigs.FirstOrDefaultAsync(c => c.GuildId == Context.Guild.Id);
+
+            if (config == null)
+            {
+                config = new()
+                {
+                    GuildId = Context.Guild.Id,
+                    VideoNotificationRoleId = role?.Id
+                };
+                await dbContext.GuildConfigs.AddAsync(config);
+            }
+            else
+            {
+                config.VideoNotificationRoleId = role?.Id;
+                dbContext.GuildConfigs.Update(config);
+            }
+
+            await dbContext.SaveChangesAsync();
+            var embed = DiscordInteractions.CreateSuccessEmbed($"Video notification role set to {role}");
+            await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
+            await LogAction($"Set video notification role to {role}", role != null ? $"Id: {role.Id}" : null);
+        } catch (Exception ex)
+        {
+            await LogError("Error while setting video notification role", ex.Message);
+        }
+    }
+
     [SlashCommand("configurechannel", "Configure channels with certain bot-specific settings",  DefaultGuildPermissions = Permissions.Administrator)]
     public async Task ConfigureChannel(Channel channel,
         [SlashCommandParameter(Description = "Whether xp should be disabled for this channel.")] bool? disableXp = null)

@@ -542,6 +542,12 @@ namespace FrostBot.Data.Migrations
                     b.Property<ulong?>("LogChannelId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<ulong?>("VideoNotificationChannelId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ulong?>("VideoNotificationRoleId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<ulong?>("WelcomeChannelId")
                         .HasColumnType("INTEGER");
 
