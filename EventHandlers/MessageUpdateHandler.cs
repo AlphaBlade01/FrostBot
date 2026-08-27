@@ -14,11 +14,13 @@ public class MessageUpdateHandler : IMessageUpdateGatewayHandler
 {
     private readonly IDbContextFactory<BotDbContext> _dbContextFactory;
     private readonly LogService _logService;
+    private readonly ChannelConfigService _channelConfigService;
     
-    public MessageUpdateHandler(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService)
+    public MessageUpdateHandler(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService, ChannelConfigService channelConfigService)
     {
         _dbContextFactory = dbContextFactory;
         _logService = logService;
+        _channelConfigService = channelConfigService;
     }
 
     public async ValueTask HandleAsync(Message arg)
@@ -45,7 +47,8 @@ public class MessageUpdateHandler : IMessageUpdateGatewayHandler
         log.Content = arg.Content;
         await dbContext.SaveChangesAsync();
 
-        // Send log embed to logging channel
+        // Send log embed to logging channel ensuring logging is not disabled for the channel
+        if ((await _channelConfigService.GetChannelConfigAsync(arg.ChannelId)).IsMessageLoggingDisabled) return;
         await _logService.SendLogEmbed((ulong)arg.GuildId, embed);
     }
 }

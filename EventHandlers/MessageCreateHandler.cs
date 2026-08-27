@@ -13,12 +13,14 @@ public class MessageCreateHandler : IMessageCreateGatewayHandler
 {
     private const string DEFAULT_LEVEL_MESSAGE_TEMPLATE = "Congrats $user, you have reached level $level";
     private readonly IDbContextFactory<BotDbContext> _dbContextFactory;
+    private readonly ChannelConfigService _channelConfigService;
     private readonly LevelService _levelService;
     private readonly GatewayClient _client;
 
-    public MessageCreateHandler(IDbContextFactory<BotDbContext> dbContextFactory, LevelService levelService, GatewayClient client)
+    public MessageCreateHandler(IDbContextFactory<BotDbContext> dbContextFactory, ChannelConfigService channelConfigService, LevelService levelService, GatewayClient client)
     {
         _dbContextFactory = dbContextFactory;
+        _channelConfigService = channelConfigService;
         _levelService = levelService;
         _client = client;
     }
@@ -67,8 +69,8 @@ public class MessageCreateHandler : IMessageCreateGatewayHandler
 
         // Update level in database
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-        ChannelConfig? channelConfig = await dbContext.ChannelConfigs.FirstOrDefaultAsync(c => c.ChannelId == arg.ChannelId);
-        if (channelConfig?.IsXpDisabled == true) return;
+        ChannelConfig channelConfig = await _channelConfigService.GetChannelConfigAsync(arg.ChannelId);
+        if (channelConfig.IsXpDisabled) return;
 
         UserInfo? storedUser = await dbContext.UserInfo.FirstOrDefaultAsync(u => u.UserId == userId);
         UserInfo user = storedUser ?? new() { UserId = userId };

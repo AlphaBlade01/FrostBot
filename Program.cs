@@ -4,9 +4,6 @@ using FrostBot.Logic.Jobs.Registrations;
 using FrostBot.Logic.Services;
 using FrostBot.Logic.Views;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
@@ -48,6 +45,7 @@ builder.Services.AddDiscordGateway(options =>
     .AddSingleton<LogService>()
     .AddSingleton<ModerationService>()
     .AddSingleton<LevelService>()
+    .AddSingleton<ChannelConfigService>()
     .AddSingleton<NotificationService>()
     // Views
     .AddSingleton<ModerationViewEngine>();

@@ -505,6 +505,9 @@ namespace FrostBot.Data.Migrations
                     b.Property<ulong>("GuildId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsMessageLoggingDisabled")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("IsXpDisabled")
                         .HasColumnType("INTEGER");
 

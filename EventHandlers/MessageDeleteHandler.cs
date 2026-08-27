@@ -13,12 +13,14 @@ public class MessageDeleteHandler : IMessageDeleteGatewayHandler
 {
     private readonly IDbContextFactory<BotDbContext> _dbContextFactory;
     private readonly LogService _logService;
+    private readonly ChannelConfigService _channelConfigService;
     private readonly GatewayClient _client;
 
-    public MessageDeleteHandler(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService, GatewayClient client)
+    public MessageDeleteHandler(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService, ChannelConfigService channelConfigService, GatewayClient client)
     {
         _dbContextFactory = dbContextFactory;
         _logService = logService;
+        _channelConfigService = channelConfigService;
         _client = client;
     }
 
@@ -40,6 +42,8 @@ public class MessageDeleteHandler : IMessageDeleteGatewayHandler
         GuildUser author = await _client.Rest.GetGuildUserAsync((ulong)arg.GuildId, log.AuthorId);
         DiscordInteractions.ApplyAuthor(embed, author);
 
+        // Ensure message logging is enabled
+        if ((await _channelConfigService.GetChannelConfigAsync(arg.ChannelId)).IsMessageLoggingDisabled) return;
         await _logService.SendLogEmbed((ulong)arg.GuildId, embed);
     }
 }

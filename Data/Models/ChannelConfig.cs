@@ -12,4 +12,5 @@ public class ChannelConfig
     [ForeignKey(nameof(GuildId))]
     public ulong GuildId { get; set; }
     public bool IsXpDisabled { get; set; }
+    public bool IsMessageLoggingDisabled { get; set; }
 }

@@ -17,11 +17,13 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 {
     private readonly IDbContextFactory<BotDbContext> _dbContextFactory;
     private readonly LogService _logService;
+    private readonly ChannelConfigService _channelConfigService;
 
-    public ConfigModule(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService)
+    public ConfigModule(IDbContextFactory<BotDbContext> dbContextFactory, LogService logService, ChannelConfigService channelConfigService)
     {
         _dbContextFactory = dbContextFactory;
         _logService = logService;
+        _channelConfigService = channelConfigService;
     }
 
     private async Task LogError(string title, string exMessage)
@@ -316,20 +318,17 @@ public class ConfigModule : ApplicationCommandModule<ApplicationCommandContext>
 
     [SlashCommand("configurechannel", "Configure channels with certain bot-specific settings",  DefaultGuildPermissions = Permissions.Administrator)]
     public async Task ConfigureChannel(Channel channel,
-        [SlashCommandParameter(Description = "Whether xp should be disabled for this channel.")] bool? disableXp = null)
+        [SlashCommandParameter(Description = "Whether xp should be disabled for this channel.")] bool? disableXp = null,
+        [SlashCommandParameter(Description = "Whether message logging should be disabled for this channel.")] bool? disableMessageLogging = null)
     {
         try
         {
             await Context.Interaction.SendResponseAsync(InteractionCallback.DeferredMessage());
-            await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
-            ChannelConfig? retrievedConfig = await dbContext.ChannelConfigs.FirstOrDefaultAsync(c => c.ChannelId == channel.Id);
-            bool exists = retrievedConfig != null;
-
-            ChannelConfig config = retrievedConfig ?? new ChannelConfig() { ChannelId = channel.Id, GuildId = Context.Guild.Id };
-            if (disableXp != null) config.IsXpDisabled = (bool)disableXp;
-
-            if (!exists) await dbContext.ChannelConfigs.AddAsync(config);
-            await dbContext.SaveChangesAsync();
+            await _channelConfigService.UpdateChannelConfigAsync(
+                channel.Id,
+                Context.Guild.Id,
+                disableXp,
+                disableMessageLogging);
 
             var embed = DiscordInteractions.CreateSuccessEmbed($"Successfully updated channel configurations for {channel}.");
             await DiscordInteractions.SendDeferredResponse(Context, new() { Embeds = [embed] });
