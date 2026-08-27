@@ -19,7 +19,7 @@ public class LogService
 
     public async Task SendLogEmbed(ulong guildId, EmbedProperties embed, string? content = null)
     {
-        BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
+        await using BotDbContext dbContext = await _dbContextFactory.CreateDbContextAsync();
         ulong? channelId = (await dbContext.GuildConfigs.FirstOrDefaultAsync(g => g.GuildId == guildId))?.LogChannelId;
         if (channelId == null) return;
         await _client.Rest.SendMessageAsync(channelId.Value, new MessageProperties { Embeds = [embed], Content = content });
