@@ -25,7 +25,7 @@ public class LevelService
         _dbContextFactory = dbContextFactory;
     }
 
-    private void CleanExpiredCache()
+    private void CleanExpiredCooldownCache()
     {
         var now = DateTimeOffset.UtcNow;
         foreach (var entry in userCooldowns)
@@ -43,7 +43,7 @@ public class LevelService
         if (messageCount > MAX_MESSAGES)
         {
             messageCount = 0;
-            CleanExpiredCache();
+            CleanExpiredCooldownCache();
         }
 
         return exists ? until > DateTimeOffset.UtcNow : false;
