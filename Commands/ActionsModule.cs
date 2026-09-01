@@ -11,6 +11,6 @@ public class ActionsModule : ApplicationCommandModule<ApplicationCommandContext>
     public string Kill(GuildUser user)
     {
         if (user.Id == Context.User.Id) return "you killed yourself";
-        return $"{user.Nickname} has been ripped to shreds";
+        return $"{user.Nickname ?? user.GlobalName ?? user.Username} has been ripped to shreds";
     }
 }
