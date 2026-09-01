@@ -34,18 +34,20 @@ public class NotificationService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly LogService _logService;
     private readonly ILogger<NotificationService> _logger;
+    private readonly IHostEnvironment _hostEnvironment;
     private readonly string _callbackUrl;
 
     // Video IDs of recently handled notifications (sent or skipped), used to ignore duplicate hub deliveries
     private readonly ConcurrentDictionary<string, DateTimeOffset> _recentVideos = new();
 
-    public NotificationService(IDbContextFactory<BotDbContext> dbContextFactory, GatewayClient client, IHttpClientFactory httpClientFactory, LogService logService, IConfiguration configuration, ILogger<NotificationService> logger)
+    public NotificationService(IDbContextFactory<BotDbContext> dbContextFactory, GatewayClient client, IHttpClientFactory httpClientFactory, LogService logService, IConfiguration configuration, ILogger<NotificationService> logger, IHostEnvironment hostEnvironment)
     {
         _dbContextFactory = dbContextFactory;
         _client = client;
         _httpClientFactory = httpClientFactory;
         _logService = logService;
         _logger = logger;
+        _hostEnvironment = hostEnvironment;
 
         _callbackUrl = configuration["Youtube:CallbackUrl"] ?? CALLBACK_URL;
         if (!_callbackUrl.EndsWith(CALLBACK_PATH, StringComparison.Ordinal))
@@ -54,8 +56,14 @@ public class NotificationService
 
     public async Task SubscribeToYoutubeAsync()
     {
-        // Reuse the pooled client (registered in Program.cs) so failed retries
-        // don't leak sockets on a small instance
+        // Skip subscription on dev machine
+        if (_hostEnvironment.IsDevelopment())
+        {
+            _logger.LogInformation("Skipping YouTube subscription in development environment");
+            return;
+        }
+
+        // Subscribe to PubSubHubBub for the channel's video feed
         using HttpClient httpClient = _httpClientFactory.CreateClient("youtube-hub");
 
         var form = new FormUrlEncodedContent(new Dictionary<string, string>
