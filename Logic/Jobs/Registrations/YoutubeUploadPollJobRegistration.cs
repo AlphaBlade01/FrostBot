@@ -2,22 +2,21 @@ using Quartz;
 
 namespace FrostBot.Logic.Jobs.Registrations;
 
-public class YoutubeSubscriptionJobRegistration : IJobRegistration
+public class YoutubeUploadPollJobRegistration : IJobRegistration
 {
     public Task RegisterAsync(IScheduler scheduler, CancellationToken cancellationToken = default)
     {
-        // Renew the YouTube hub subscription daily. The hub can grant a lease as
-        // short as 5 days, so renewing every 24h guarantees the subscription never
-        // lapses between renewals.
-        var job = JobBuilder.Create<YoutubeSubscriptionJob>()
-            .WithIdentity("youtube-subscription", "youtube")
+        // Poll every 2 minutes for new uploads: the Data API's uploads playlist (1 quota unit)
+        // plus the channel feed, which is the fallback and the Shorts marker.
+        var job = JobBuilder.Create<YoutubeUploadPollJob>()
+            .WithIdentity("youtube-upload-poll", "youtube")
             .StoreDurably()
             .Build();
 
         var trigger = TriggerBuilder.Create()
-            .WithIdentity("youtube-subscription-trigger", "youtube")
+            .WithIdentity("youtube-upload-poll-trigger", "youtube")
             .StartNow()
-            .WithSimpleSchedule(x => x.WithIntervalInHours(24).RepeatForever())
+            .WithSimpleSchedule(x => x.WithIntervalInMinutes(2).RepeatForever())
             .Build();
 
         // ScheduleJobs with replace: true upserts both the job and its trigger

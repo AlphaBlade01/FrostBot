@@ -698,6 +698,22 @@ namespace FrostBot.Data.Migrations
                     b.ToTable("Warnings");
                 });
 
+            modelBuilder.Entity("FrostBot.Data.Models.YoutubePollState", b =>
+                {
+                    b.Property<string>("ChannelId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("LastPublishedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastVideoId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ChannelId");
+
+                    b.ToTable("YoutubePollStates");
+                });
+
             modelBuilder.Entity("AppAny.Quartz.EntityFrameworkCore.Migrations.QuartzBlobTrigger", b =>
                 {
                     b.HasOne("AppAny.Quartz.EntityFrameworkCore.Migrations.QuartzTrigger", "Trigger")

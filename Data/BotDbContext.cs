@@ -20,6 +20,7 @@ public class BotDbContext : DbContext
     public DbSet<UserInfo> UserInfo { get; set; }
     public DbSet<RoleReward> RoleRewards { get; set; }
     public DbSet<LogMessage> Messages { get; set; }
+    public DbSet<YoutubePollState> YoutubePollStates { get; set; }
 
     public BotDbContext(IConfiguration configuration)
     {
