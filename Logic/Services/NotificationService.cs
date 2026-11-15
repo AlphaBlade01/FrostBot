@@ -15,8 +15,8 @@ public class NotificationService
 {
     // The YouTube channel whose uploads the bot announces. YOUTUBER_NAME is only the display
     // name used in the notification message.
-    public const string YOUTUBER_NAME = "clips"; //"Fr0stPh3onix";
-    public const string CHANNEL_ID = "UCIziXQroOb2iKZ227LP7-lA"; //"UC0fGA6bRAyCR2FK_qMvwZsA";
+    public const string YOUTUBER_NAME = "Fr0stPh3onix";
+    public const string CHANNEL_ID = "UC0fGA6bRAyCR2FK_qMvwZsA";
 
     // The channel's public RSS feed. The Data API's uploads playlist is the primary discovery
     // source; this feed is the fallback and the authoritative /shorts/ marker. Poll-only by
