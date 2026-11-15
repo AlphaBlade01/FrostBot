@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using NetCord;
 using NetCord.Gateway;
 using NetCord.Hosting.Gateway;
+using NetCord.Hosting.Services;
 using NetCord.Hosting.Services.ApplicationCommands;
 using NetCord.Hosting.Services.ComponentInteractions;
 using NetCord.Services.ComponentInteractions;
@@ -77,6 +78,9 @@ using var db = app.Services
     .GetRequiredService<IDbContextFactory<BotDbContext>>()
     .CreateDbContext();
 await db.Database.MigrateAsync();
+
+// Discover all command and component modules in the assembly
+app.AddModules(typeof(Program).Assembly);
 
 // Register all scheduled jobs — each IJobRegistration describes its own job and triggers
 var scheduler = app.Services.GetRequiredService<IScheduler>();
